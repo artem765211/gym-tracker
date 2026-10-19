@@ -22,4 +22,8 @@
     <ProjectReference Include="..\Gymtracker.Core\Gymtracker.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Calculator\" />
+  </ItemGroup>
+
 </Project>
