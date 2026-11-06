@@ -62,7 +62,7 @@ public class AppDbContext : IdentityDbContext<IdentityUser>
                 .HasForeignKey(x => x.ExerciseId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            we.Property(x => x.TopWeight).HasPrecision(6, 2);
+            we.Property(x => x.WorkingWeight).HasPrecision(6, 2);
         });
 
         modelBuilder.Entity<BodyMeasurement>(m =>

@@ -55,7 +55,7 @@ tags: [курсовая, aspnet, react, typescript, tailwind, postgresql, docker
 **1RM (формула Эпли):**
 `1RM = вес × (1 + повторения / 30)`
 Нужна, чтобы 100 кг на 3 повторения и 100 кг на 10 повторений не считались одинаковой нагрузкой.
-Считается по лучшему подходу упражнения (`TopWeight`, `TopReps`); остальные подходы на прирост не влияют.
+Считается по рабочему подходу упражнения (`WorkingWeight`, `WorkingReps`); остальные подходы на прирост не влияют.
 
 **Прирост за месяц, %:**
 `(лучший 1RM этого месяца − лучший 1RM прошлого месяца) / лучший 1RM прошлого месяца × 100`
@@ -91,7 +91,7 @@ GymTracker/
 - **Exercise**: Id, Name, MuscleGroup, UserId (пусто для общих упражнений)
 - **Workout**: Id, UserId, Date, Note
   - статуса «выполнено» нет: прошедшие тренировки без результатов попадают в список «Не заполнено»
-- **WorkoutExercise**: Id, WorkoutId, ExerciseId, TopWeight (необязательно), TopReps (необязательно)
+- **WorkoutExercise**: Id, WorkoutId, ExerciseId, WorkingWeight (необязательно), WorkingReps (необязательно)
 
 Заметки по PostgreSQL:
 - пакет `Npgsql.EntityFrameworkCore.PostgreSQL`

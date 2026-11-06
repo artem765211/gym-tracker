@@ -10,7 +10,7 @@ public class WorkoutExercise
     public int ExerciseId { get; set; }
     public Exercise Exercise { get; set; } = null!;
 
-    // Лучший подход, вносится на вкладке «Сила». Необязательные поля.
-    public decimal? TopWeight { get; set; }
-    public int? TopReps { get; set; }
+    // Рабочий подход, вносится на вкладке «Сила». Необязательные поля.
+    public decimal? WorkingWeight { get; set; }
+    public int? WorkingReps { get; set; }
 }
