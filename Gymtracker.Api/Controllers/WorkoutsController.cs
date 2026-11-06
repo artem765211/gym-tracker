@@ -158,6 +158,43 @@ public class WorkoutsController : ControllerBase
         return Ok(await FindWorkoutResponse(id, userId));
     }
 
+    // Запись рабочего подхода: PATCH /api/workouts/5/exercises/3
+    [HttpPatch("{id:int}/exercises/{exerciseId:int}")]
+    public async Task<ActionResult<WorkoutExerciseResponse>> UpdateResult(
+        int id,
+        int exerciseId,
+        UpdateWorkoutExerciseResultRequest request)
+    {
+        var userId = CurrentUserId;
+
+        // Условие на Workout.UserId не даст изменить чужую тренировку.
+        // Метод возвращает количество изменённых строк: 0 значит, что такого упражнения в тренировке нет или она чужая.
+        var updatedCount = await _db.WorkoutExercises
+            .Where(we => we.WorkoutId == id && we.ExerciseId == exerciseId && we.Workout.UserId == userId)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(we => we.WorkingWeight, request.WorkingWeight)
+                .SetProperty(we => we.WorkingReps, request.WorkingReps));
+
+        if (updatedCount == 0)
+        {
+            return NotFound();
+        }
+
+        var response = await _db.WorkoutExercises
+            .AsNoTracking()
+            .Where(we => we.WorkoutId == id && we.ExerciseId == exerciseId && we.Workout.UserId == userId)
+            .Select(we => new WorkoutExerciseResponse(
+                we.ExerciseId,
+                we.Exercise.Name,
+                we.Exercise.MuscleGroup,
+                we.WorkingWeight,
+                we.WorkingReps))
+            .FirstOrDefaultAsync();
+
+        // Между двумя запросами упражнение могли успеть убрать из тренировки
+        return response is null ? NotFound() : Ok(response);
+    }
+
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {
