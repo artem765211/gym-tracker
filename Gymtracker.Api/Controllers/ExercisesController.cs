@@ -71,4 +71,42 @@ public class ExercisesController : ControllerBase
 
         return CreatedAtAction(nameof(GetById), new { id = exercise.Id }, response);
     }
+
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var userId = CurrentUserId;
+
+        var exercise = await _db.Exercises
+            .FirstOrDefaultAsync(e => e.Id == id && (e.UserId == null || e.UserId == userId));
+
+        // Чужое упражнение даёт 404, как и несуществующее
+        if (exercise is null)
+        {
+            return NotFound();
+        }
+
+        // Общее упражнение пользователь видит, но удалять его нельзя
+        if (exercise.UserId is null)
+        {
+            return Problem(
+                detail: "Общие упражнения из справочника удалять нельзя.",
+                statusCode: StatusCodes.Status403Forbidden);
+        }
+
+        // Проверяем заранее: база всё равно не даст удалить такое упражнение,
+        // но пользователь получил бы непонятную ошибку 500
+        var isUsedInWorkouts = await _db.WorkoutExercises.AnyAsync(we => we.ExerciseId == id);
+        if (isUsedInWorkouts)
+        {
+            return Problem(
+                detail: "Упражнение используется в тренировках, поэтому удалить его нельзя.",
+                statusCode: StatusCodes.Status400BadRequest);
+        }
+
+        _db.Exercises.Remove(exercise);
+        await _db.SaveChangesAsync();
+
+        return NoContent();
+    }
 }
