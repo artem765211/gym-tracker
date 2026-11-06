@@ -16,6 +16,7 @@ public class AppDbContext : IdentityDbContext<IdentityUser>
     public DbSet<Workout> Workouts => Set<Workout>();
     public DbSet<WorkoutExercise> WorkoutExercises => Set<WorkoutExercise>();
     public DbSet<BodyMeasurement> BodyMeasurements => Set<BodyMeasurement>();
+    public DbSet<StrengthRecord> StrengthRecords => Set<StrengthRecord>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -68,6 +69,26 @@ public class AppDbContext : IdentityDbContext<IdentityUser>
 
             // Одно упражнение встречается в тренировке только один раз
             we.HasIndex(x => new { x.WorkoutId, x.ExerciseId }).IsUnique();
+        });
+
+        modelBuilder.Entity<StrengthRecord>(r =>
+        {
+            r.Property(x => x.UserId).IsRequired().HasMaxLength(450);
+            r.Property(x => x.Weight).HasPrecision(6, 2);
+
+            // Одна запись на упражнение в неделю у каждого пользователя
+            r.HasIndex(x => new { x.UserId, x.ExerciseId, x.WeekStart }).IsUnique();
+
+            r.HasOne<IdentityUser>()
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Упражнение, по которому есть записи, удалить нельзя
+            r.HasOne(x => x.Exercise)
+                .WithMany()
+                .HasForeignKey(x => x.ExerciseId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<BodyMeasurement>(m =>

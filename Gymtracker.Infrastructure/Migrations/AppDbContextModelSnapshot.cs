@@ -100,6 +100,42 @@ namespace Gymtracker.Infrastructure.Migrations
                     b.ToTable("Exercises");
                 });
 
+            modelBuilder.Entity("Gymtracker.Core.Entities.StrengthRecord", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ExerciseId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Reps")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.Property<DateOnly>("WeekStart")
+                        .HasColumnType("date");
+
+                    b.Property<decimal>("Weight")
+                        .HasPrecision(6, 2)
+                        .HasColumnType("numeric(6,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExerciseId");
+
+                    b.HasIndex("UserId", "ExerciseId", "WeekStart")
+                        .IsUnique();
+
+                    b.ToTable("StrengthRecords");
+                });
+
             modelBuilder.Entity("Gymtracker.Core.Entities.Workout", b =>
                 {
                     b.Property<int>("Id")
@@ -367,6 +403,23 @@ namespace Gymtracker.Infrastructure.Migrations
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("Gymtracker.Core.Entities.StrengthRecord", b =>
+                {
+                    b.HasOne("Gymtracker.Core.Entities.Exercise", "Exercise")
+                        .WithMany()
+                        .HasForeignKey("ExerciseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Exercise");
                 });
 
             modelBuilder.Entity("Gymtracker.Core.Entities.Workout", b =>

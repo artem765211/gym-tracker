@@ -92,7 +92,7 @@ GymTracker/
 - **Workout**: Id, UserId, Date, Note
   - статуса «выполнено» нет
 - **WorkoutExercise**: Id, WorkoutId, ExerciseId, WorkingWeight (необязательно)
-- **StrengthRecord** (название предварительное, с тренировками не связана): Id, UserId, ExerciseId, неделя, Weight, Reps; одна запись на упражнение в неделю
+- **StrengthRecord** (с тренировками не связана): Id, UserId, ExerciseId, WeekStart (понедельник недели), Weight, Reps; одна запись на упражнение в неделю
 
 Заметки по PostgreSQL:
 - пакет `Npgsql.EntityFrameworkCore.PostgreSQL`
@@ -106,7 +106,7 @@ GymTracker/
 | Авторизация | `POST /api/auth/register`, `POST /api/auth/login` |
 | Упражнения | `GET /api/exercises`, `POST /api/exercises` |
 | Тренировки | `GET /api/workouts` (фильтр по датам), `GET /api/workouts/{id}`, `POST` (дата и список упражнений), `PUT /{id}`, `DELETE /{id}`, `PATCH /{id}/exercises/{exerciseId}` (рабочий вес) |
-| Рабочие веса | адреса уточняются: запись и чтение веса и повторений по неделям |
+| Рабочие веса | `GET /api/strength-records` (необязательный фильтр `exerciseId`), `PUT /api/strength-records` (создание или замена записи за неделю) |
 | Прогресс | `GET /api/progress/exercises/{id}`, `GET /api/progress/summary` |
 | Замеры тела | `GET /api/body-measurements`, `POST /api/body-measurements` |
 | Питание | `GET /api/nutrition/calculate` |

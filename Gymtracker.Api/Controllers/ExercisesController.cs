@@ -96,11 +96,12 @@ public class ExercisesController : ControllerBase
 
         // Проверяем заранее: база всё равно не даст удалить такое упражнение,
         // но пользователь получил бы непонятную ошибку 500
-        var isUsedInWorkouts = await _db.WorkoutExercises.AnyAsync(we => we.ExerciseId == id);
-        if (isUsedInWorkouts)
+        var isUsed = await _db.WorkoutExercises.AnyAsync(we => we.ExerciseId == id)
+            || await _db.StrengthRecords.AnyAsync(r => r.ExerciseId == id);
+        if (isUsed)
         {
             return Problem(
-                detail: "Упражнение используется в тренировках, поэтому удалить его нельзя.",
+                detail: "Упражнение используется в тренировках или рабочих весах, поэтому удалить его нельзя.",
                 statusCode: StatusCodes.Status400BadRequest);
         }
 
