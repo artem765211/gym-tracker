@@ -139,9 +139,6 @@ namespace Gymtracker.Infrastructure.Migrations
                     b.Property<int>("ExerciseId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("WorkingReps")
-                        .HasColumnType("integer");
-
                     b.Property<decimal?>("WorkingWeight")
                         .HasPrecision(6, 2)
                         .HasColumnType("numeric(6,2)");

@@ -136,8 +136,8 @@ public class WorkoutsController : ControllerBase
         workout.Date = date;
         workout.Note = request.Note;
 
-        // Оставшиеся упражнения не трогаем, чтобы сохранить их вес и повторения.
-        // Убранные удаляются вместе с результатами, новые добавляются пустыми.
+        // Оставшиеся упражнения не трогаем, чтобы сохранить их рабочий вес.
+        // Убранные удаляются вместе с весом, новые добавляются пустыми.
         workout.Exercises.RemoveAll(we => !exerciseIds.Contains(we.ExerciseId));
 
         var currentIds = workout.Exercises.Select(we => we.ExerciseId).ToList();
@@ -158,12 +158,12 @@ public class WorkoutsController : ControllerBase
         return Ok(await FindWorkoutResponse(id, userId));
     }
 
-    // Запись рабочего подхода: PATCH /api/workouts/5/exercises/3
+    // Запись рабочего веса: PATCH /api/workouts/5/exercises/3
     [HttpPatch("{id:int}/exercises/{exerciseId:int}")]
-    public async Task<ActionResult<WorkoutExerciseResponse>> UpdateResult(
+    public async Task<ActionResult<WorkoutExerciseResponse>> UpdateWorkingWeight(
         int id,
         int exerciseId,
-        UpdateWorkoutExerciseResultRequest request)
+        UpdateWorkingWeightRequest request)
     {
         var userId = CurrentUserId;
 
@@ -172,8 +172,7 @@ public class WorkoutsController : ControllerBase
         var updatedCount = await _db.WorkoutExercises
             .Where(we => we.WorkoutId == id && we.ExerciseId == exerciseId && we.Workout.UserId == userId)
             .ExecuteUpdateAsync(setters => setters
-                .SetProperty(we => we.WorkingWeight, request.WorkingWeight)
-                .SetProperty(we => we.WorkingReps, request.WorkingReps));
+                .SetProperty(we => we.WorkingWeight, request.WorkingWeight));
 
         if (updatedCount == 0)
         {
@@ -187,8 +186,7 @@ public class WorkoutsController : ControllerBase
                 we.ExerciseId,
                 we.Exercise.Name,
                 we.Exercise.MuscleGroup,
-                we.WorkingWeight,
-                we.WorkingReps))
+                we.WorkingWeight))
             .FirstOrDefaultAsync();
 
         // Между двумя запросами упражнение могли успеть убрать из тренировки
@@ -248,7 +246,6 @@ public class WorkoutsController : ControllerBase
                     we.ExerciseId,
                     we.Exercise.Name,
                     we.Exercise.MuscleGroup,
-                    we.WorkingWeight,
-                    we.WorkingReps))
+                    we.WorkingWeight))
                 .ToList()));
 }

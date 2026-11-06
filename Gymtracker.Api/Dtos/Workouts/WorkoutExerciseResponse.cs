@@ -4,5 +4,4 @@ public record WorkoutExerciseResponse(
     int ExerciseId,
     string Name,
     string MuscleGroup,
-    decimal? WorkingWeight,
-    int? WorkingReps);
+    decimal? WorkingWeight);

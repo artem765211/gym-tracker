@@ -10,7 +10,6 @@ public class WorkoutExercise
     public int ExerciseId { get; set; }
     public Exercise Exercise { get; set; } = null!;
 
-    // Рабочий подход, вносится на вкладке «Сила». Необязательные поля.
+    // Рабочий вес в этой тренировке, необязательное поле. На расчёт прироста не влияет.
     public decimal? WorkingWeight { get; set; }
-    public int? WorkingReps { get; set; }
 }
