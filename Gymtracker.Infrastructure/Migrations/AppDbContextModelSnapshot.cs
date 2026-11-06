@@ -122,7 +122,8 @@ namespace Gymtracker.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId", "Date");
+                    b.HasIndex("UserId", "Date")
+                        .IsUnique();
 
                     b.ToTable("Workouts");
                 });
@@ -152,7 +153,8 @@ namespace Gymtracker.Infrastructure.Migrations
 
                     b.HasIndex("ExerciseId");
 
-                    b.HasIndex("WorkoutId");
+                    b.HasIndex("WorkoutId", "ExerciseId")
+                        .IsUnique();
 
                     b.ToTable("WorkoutExercises");
                 });

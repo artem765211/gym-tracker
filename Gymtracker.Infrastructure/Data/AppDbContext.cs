@@ -40,7 +40,9 @@ public class AppDbContext : IdentityDbContext<IdentityUser>
         {
             w.Property(x => x.UserId).IsRequired().HasMaxLength(450);
             w.Property(x => x.Note).HasMaxLength(500);
-            w.HasIndex(x => new { x.UserId, x.Date });
+
+            // У одного пользователя не больше одной тренировки в день
+            w.HasIndex(x => new { x.UserId, x.Date }).IsUnique();
 
             w.HasOne<IdentityUser>()
                 .WithMany()
@@ -63,6 +65,9 @@ public class AppDbContext : IdentityDbContext<IdentityUser>
                 .OnDelete(DeleteBehavior.Restrict);
 
             we.Property(x => x.WorkingWeight).HasPrecision(6, 2);
+
+            // Одно упражнение встречается в тренировке только один раз
+            we.HasIndex(x => new { x.WorkoutId, x.ExerciseId }).IsUnique();
         });
 
         modelBuilder.Entity<BodyMeasurement>(m =>
