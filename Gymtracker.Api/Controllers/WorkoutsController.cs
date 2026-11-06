@@ -65,18 +65,10 @@ public class WorkoutsController : ControllerBase
         var date = request.Date!.Value; // [Required] уже проверил, что дата есть
         var exerciseIds = request.ExerciseIds;
 
-        if (exerciseIds.Distinct().Count() != exerciseIds.Count)
+        var exercisesError = await CheckExercises(exerciseIds, userId);
+        if (exercisesError is not null)
         {
-            return BadRequestProblem("Одно упражнение нельзя добавить в тренировку дважды.");
-        }
-
-        // Добавлять можно только общие упражнения и свои личные
-        var availableCount = await _db.Exercises
-            .CountAsync(e => exerciseIds.Contains(e.Id) && (e.UserId == null || e.UserId == userId));
-
-        if (availableCount != exerciseIds.Count)
-        {
-            return BadRequestProblem("Некоторые упражнения не найдены.");
+            return BadRequestProblem(exercisesError);
         }
 
         if (await _db.Workouts.AnyAsync(w => w.UserId == userId && w.Date == date))
@@ -100,10 +92,7 @@ public class WorkoutsController : ControllerBase
         {
             await _db.SaveChangesAsync();
         }
-        catch (DbUpdateException ex) when (ex.InnerException is PostgresException
-        {
-            SqlState: PostgresErrorCodes.UniqueViolation
-        })
+        catch (DbUpdateException ex) when (IsUniqueViolation(ex))
         {
             // Два одинаковых запроса пришли почти одновременно (например, двойное нажатие):
             // оба прошли проверку выше, но второй остановил уникальный индекс в базе
@@ -114,6 +103,92 @@ public class WorkoutsController : ControllerBase
 
         return CreatedAtAction(nameof(GetById), new { id = workout.Id }, response);
     }
+
+    [HttpPut("{id:int}")]
+    public async Task<ActionResult<WorkoutResponse>> Update(int id, UpdateWorkoutRequest request)
+    {
+        var userId = CurrentUserId;
+        var date = request.Date!.Value; // [Required] уже проверил, что дата есть
+        var exerciseIds = request.ExerciseIds;
+
+        var workout = await _db.Workouts
+            .Include(w => w.Exercises)
+            .FirstOrDefaultAsync(w => w.Id == id && w.UserId == userId);
+
+        // Чужая тренировка даёт 404, как и несуществующая
+        if (workout is null)
+        {
+            return NotFound();
+        }
+
+        var exercisesError = await CheckExercises(exerciseIds, userId);
+        if (exercisesError is not null)
+        {
+            return BadRequestProblem(exercisesError);
+        }
+
+        // Эту же тренировку не считаем: дата может остаться прежней
+        if (await _db.Workouts.AnyAsync(w => w.UserId == userId && w.Date == date && w.Id != id))
+        {
+            return BadRequestProblem(DuplicateDateMessage);
+        }
+
+        workout.Date = date;
+        workout.Note = request.Note;
+
+        // Оставшиеся упражнения не трогаем, чтобы сохранить их вес и повторения.
+        // Убранные удаляются вместе с результатами, новые добавляются пустыми.
+        workout.Exercises.RemoveAll(we => !exerciseIds.Contains(we.ExerciseId));
+
+        var currentIds = workout.Exercises.Select(we => we.ExerciseId).ToList();
+        workout.Exercises.AddRange(exerciseIds
+            .Except(currentIds)
+            .Select(exerciseId => new WorkoutExercise { ExerciseId = exerciseId }));
+
+        try
+        {
+            await _db.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex) when (ex is DbUpdateConcurrencyException || IsUniqueViolation(ex))
+        {
+            // Почти одновременно пришёл другой запрос и изменил те же данные (например, двойное нажатие)
+            return BadRequestProblem("Не удалось сохранить: данные только что изменились. Обновите их и попробуйте снова.");
+        }
+
+        return Ok(await FindWorkoutResponse(id, userId));
+    }
+
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var userId = CurrentUserId;
+
+        // Упражнения тренировки удалит сама база (каскадное удаление в AppDbContext).
+        // Метод возвращает количество удалённых строк: 0 значит, что тренировки нет или она чужая.
+        var deletedCount = await _db.Workouts
+            .Where(w => w.Id == id && w.UserId == userId)
+            .ExecuteDeleteAsync();
+
+        return deletedCount == 0 ? NotFound() : NoContent();
+    }
+
+    // Возвращает текст ошибки или null, если список упражнений подходит
+    private async Task<string?> CheckExercises(List<int> exerciseIds, string userId)
+    {
+        if (exerciseIds.Distinct().Count() != exerciseIds.Count)
+        {
+            return "Одно упражнение нельзя добавить в тренировку дважды.";
+        }
+
+        // Добавлять можно только общие упражнения и свои личные
+        var availableCount = await _db.Exercises
+            .CountAsync(e => exerciseIds.Contains(e.Id) && (e.UserId == null || e.UserId == userId));
+
+        return availableCount == exerciseIds.Count ? null : "Некоторые упражнения не найдены.";
+    }
+
+    private static bool IsUniqueViolation(DbUpdateException ex) =>
+        ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation };
 
     private ObjectResult BadRequestProblem(string detail) =>
         Problem(detail: detail, statusCode: StatusCodes.Status400BadRequest);
