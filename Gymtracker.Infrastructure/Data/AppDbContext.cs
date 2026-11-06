@@ -1,9 +1,11 @@
 using Gymtracker.Core.Entities;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace Gymtracker.Infrastructure.Data;
 
-public class AppDbContext : DbContext
+public class AppDbContext : IdentityDbContext<IdentityUser>
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
@@ -17,12 +19,21 @@ public class AppDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // Настройка таблиц Identity (AspNetUsers и остальных)
+        base.OnModelCreating(modelBuilder);
+
         modelBuilder.Entity<Exercise>(e =>
         {
             e.Property(x => x.Name).IsRequired().HasMaxLength(100);
             e.Property(x => x.MuscleGroup).IsRequired().HasMaxLength(50);
             e.Property(x => x.UserId).HasMaxLength(450);
             e.HasIndex(x => x.UserId);
+
+            // Связь необязательная: у общих упражнений UserId = null
+            e.HasOne<IdentityUser>()
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<Workout>(w =>
@@ -30,6 +41,11 @@ public class AppDbContext : DbContext
             w.Property(x => x.UserId).IsRequired().HasMaxLength(450);
             w.Property(x => x.Note).HasMaxLength(500);
             w.HasIndex(x => new { x.UserId, x.Date });
+
+            w.HasOne<IdentityUser>()
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // Удалили тренировку: её упражнения удаляются вместе с ней
             w.HasMany(x => x.Exercises)
@@ -61,6 +77,11 @@ public class AppDbContext : DbContext
             m.Property(x => x.Goal).HasConversion<string>().HasMaxLength(20);
 
             m.HasIndex(x => new { x.UserId, x.Date });
+
+            m.HasOne<IdentityUser>()
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }
