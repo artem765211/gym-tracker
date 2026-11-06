@@ -104,7 +104,7 @@ GymTracker/
 |---|---|
 | Авторизация | `POST /api/auth/register`, `POST /api/auth/login` |
 | Упражнения | `GET /api/exercises`, `POST /api/exercises` |
-| Тренировки | `GET /api/workouts` (фильтр по датам, пагинация, `?unfilled=true` для списка «Не заполнено»), `GET /api/workouts/{id}`, `POST` (дата и список упражнений), `PUT /{id}`, `DELETE /{id}` |
+| Тренировки | `GET /api/workouts` (фильтр по датам, `?unfilled=true` для списка «Не заполнено»), `GET /api/workouts/{id}`, `POST` (дата и список упражнений), `PUT /{id}`, `DELETE /{id}` |
 | Результаты | `PATCH /api/workouts/{id}/exercises/{exerciseId}` (вес и повторения) |
 | Прогресс | `GET /api/progress/exercises/{id}`, `GET /api/progress/summary` |
 | Замеры тела | `GET /api/body-measurements`, `POST /api/body-measurements` |
@@ -175,7 +175,7 @@ GymTracker/
 - [ ] CRUD упражнений
 - [ ] CRUD тренировок (день + упражнения из справочника)
 - [ ] Проверка владения данными
-- [ ] Валидация, пагинация, фильтр по датам
+- [ ] Валидация, фильтр по датам
 
 ### Неделя 5. Прогресс и КБЖУ
 - [ ] Эндпоинты прогресса по месяцам, запись результата упражнения, список «Не заполнено»

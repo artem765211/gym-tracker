@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using Gymtracker.Api.Dtos.Workouts;
 using Gymtracker.Core.Entities;
@@ -25,6 +26,28 @@ public class WorkoutsController : ControllerBase
 
     // Id пользователя берём из токена, а не из запроса
     private string CurrentUserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+    // Календарь запрашивает тренировки за нужный период: GET /api/workouts?from=2026-11-01&to=2026-11-30
+    [HttpGet]
+    public async Task<ActionResult<List<WorkoutResponse>>> GetByPeriod(
+        [FromQuery, Required] DateOnly? from,
+        [FromQuery, Required] DateOnly? to)
+    {
+        if (from > to)
+        {
+            return BadRequestProblem("Дата from не может быть позже даты to.");
+        }
+
+        var userId = CurrentUserId;
+
+        var workouts = await ToResponse(_db.Workouts
+                .AsNoTracking()
+                .Where(w => w.UserId == userId && w.Date >= from && w.Date <= to)
+                .OrderBy(w => w.Date))
+            .ToListAsync();
+
+        return Ok(workouts);
+    }
 
     [HttpGet("{id:int}")]
     public async Task<ActionResult<WorkoutResponse>> GetById(int id)
@@ -96,21 +119,24 @@ public class WorkoutsController : ControllerBase
         Problem(detail: detail, statusCode: StatusCodes.Status400BadRequest);
 
     private Task<WorkoutResponse?> FindWorkoutResponse(int id, string userId) =>
-        _db.Workouts
-            .AsNoTracking()
-            .Where(w => w.Id == id && w.UserId == userId)
-            .Select(w => new WorkoutResponse(
-                w.Id,
-                w.Date,
-                w.Note,
-                w.Exercises
-                    .OrderBy(we => we.Id)
-                    .Select(we => new WorkoutExerciseResponse(
-                        we.ExerciseId,
-                        we.Exercise.Name,
-                        we.Exercise.MuscleGroup,
-                        we.WorkingWeight,
-                        we.WorkingReps))
-                    .ToList()))
+        ToResponse(_db.Workouts
+                .AsNoTracking()
+                .Where(w => w.Id == id && w.UserId == userId))
             .FirstOrDefaultAsync();
+
+    // Общий формат ответа: какие данные тренировки достать из базы и как их вернуть
+    private static IQueryable<WorkoutResponse> ToResponse(IQueryable<Workout> workouts) =>
+        workouts.Select(w => new WorkoutResponse(
+            w.Id,
+            w.Date,
+            w.Note,
+            w.Exercises
+                .OrderBy(we => we.Id)
+                .Select(we => new WorkoutExerciseResponse(
+                    we.ExerciseId,
+                    we.Exercise.Name,
+                    we.Exercise.MuscleGroup,
+                    we.WorkingWeight,
+                    we.WorkingReps))
+                .ToList()));
 }
