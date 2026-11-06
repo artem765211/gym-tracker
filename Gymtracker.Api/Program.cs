@@ -49,6 +49,18 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddControllers();
 
+builder.Services.AddProblemDetails();
+
+const string frontendCorsPolicy = "Frontend";
+
+builder.Services.AddCors(options =>
+{
+    var origins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+
+    options.AddPolicy(frontendCorsPolicy, policy =>
+        policy.WithOrigins(origins).AllowAnyHeader().AllowAnyMethod());
+});
+
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi(options =>
@@ -86,6 +98,10 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Configure the HTTP request pipeline.
+// Необработанные исключения и пустые ответы с ошибкой (401, 404...) приходят как Problem Details
+app.UseExceptionHandler();
+app.UseStatusCodePages();
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -93,6 +109,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors(frontendCorsPolicy);
 
 app.UseAuthentication();
 app.UseAuthorization();
