@@ -37,4 +37,11 @@ public class AccessTests
         // Проверяем код ответа
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
+    [Fact]
+    public async Task GetProgressSummary_WithoutToken_Returns401()
+    {
+        var response = await _client.GetAsync("/api/progress/summary");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
 }
