@@ -122,3 +122,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// Без этой строки класс Program не виден из проекта с тестами
+public partial class Program;

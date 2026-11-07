@@ -16,7 +16,7 @@
 - `Gymtracker.Core`: сущности, перечисления, калькуляторы (1RM, прирост, КБЖУ). Без ссылок на EF Core и ASP.NET.
 - `Gymtracker.Infrastructure`: `AppDbContext`, миграции, Identity
 - `Gymtracker.Tests`: xUnit
-- Зависимости: Api -> Core, Infrastructure; Infrastructure -> Core; Tests -> Core.
+- Зависимости: Api -> Core, Infrastructure; Infrastructure -> Core; Tests -> Core, Api, Infrastructure (Api и Infrastructure нужны для интеграционных тестов).
 
 ## Стек
 ASP.NET Core Web API (C#, net10.0), PostgreSQL 16 в Docker, EF Core (Code First) + Npgsql,
@@ -37,7 +37,7 @@ Identity + JWT, xUnit, Swagger. Фронтенд позже: React + Vite + Type
 ## Команды (Windows, корень репозитория)
 Мой терминал: PowerShell. Команды для меня пиши под него.
 - `docker compose up -d`: поднять PostgreSQL (сначала должен быть запущен Docker Desktop)
-- `dotnet build` / `dotnet test`
+- `dotnet build` / `dotnet test` (для интеграционных тестов должен быть запущен Docker Desktop)
 - `dotnet run --project Gymtracker.Api --launch-profile http`: запустить API, Swagger на `http://localhost:5036/swagger`
 - `dotnet ef migrations add Name --project Gymtracker.Infrastructure --startup-project Gymtracker.Api`
 - `dotnet ef database update --project Gymtracker.Infrastructure --startup-project Gymtracker.Api`
@@ -74,14 +74,11 @@ Identity + JWT, xUnit, Swagger. Фронтенд позже: React + Vite + Type
 - `PUT` тренировки сохраняет рабочий вес у оставшихся упражнений; у убранных он удаляется.
 
 Дальше, неделя 5 (по одному шагу, порядок можно менять):
-1. Интеграционные тесты ключевых эндпоинтов.
-
-Вопросы к неделе 5 (спроси меня, когда дойдём):
-- Интеграционные тесты: какая база (отдельная тестовая или Testcontainers)? Понадобится ссылка Tests -> Api, поэтому правило зависимостей выше придётся изменить.
+1. Интеграционные тесты ключевых эндпоинтов, около 10 штук, по одному с подробным объяснением (я только учусь). Лежат в `Gymtracker.Tests/Integration`, база временная через Testcontainers (`ApiFactory`). Уже есть: защита «API подключён к временной базе» и 401 без токена. Осталось: вход и регистрация, защита чужих данных (404), тренировки и повторная дата (400), рабочие веса и прогресс.
 
 Проверить на интеграционных тестах: при столкновении одновременных запросов `POST` и `PUT` тренировки должны давать 400. Этот перехват в `WorkoutsController` вручную вызвать не удалось.
 
 Известные ограничения: нет блокировки при переборе паролей; чужие данные дают 404, а 403 используется только при удалении общего упражнения;
-автотесты есть только на калькуляторы, API проверяется вручную. Сообщения встроенной валидации на английском (можно поправить при подключении фронтенда).
+автотесты покрывают калькуляторы и пока только начало API, остальные эндпоинты проверяются вручную. Сообщения встроенной валидации на английском (можно поправить при подключении фронтенда).
 В локальной базе есть тестовые пользователи `*-test-*@example.test` с тренировками за 2030-2032 годы, рабочими весами и замерами тела за 2026 год, это не настоящие данные.
 Отметки в `gym-tracker-plan.md` не обновлялись, ориентируйся на этот раздел.
