@@ -102,7 +102,8 @@ public class AppDbContext : IdentityDbContext<IdentityUser>
             m.Property(x => x.ActivityLevel).HasConversion<string>().HasMaxLength(20);
             m.Property(x => x.Goal).HasConversion<string>().HasMaxLength(20);
 
-            m.HasIndex(x => new { x.UserId, x.Date });
+            // У одного пользователя не больше одного замера в день
+            m.HasIndex(x => new { x.UserId, x.Date }).IsUnique();
 
             m.HasOne<IdentityUser>()
                 .WithMany()

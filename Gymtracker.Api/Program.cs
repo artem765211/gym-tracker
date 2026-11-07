@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json.Serialization;
 using Gymtracker.Core.Interfaces;
 using Gymtracker.Infrastructure.Auth;
 using Gymtracker.Infrastructure.Data;
@@ -47,7 +48,10 @@ builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationSc
 
 builder.Services.AddAuthorization();
 
-builder.Services.AddControllers();
+// Перечисления (пол, активность, цель) передаём словами, а не числами
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(allowIntegerValues: false)));
 
 builder.Services.AddProblemDetails();
 

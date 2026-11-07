@@ -66,7 +66,8 @@ namespace Gymtracker.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId", "Date");
+                    b.HasIndex("UserId", "Date")
+                        .IsUnique();
 
                     b.ToTable("BodyMeasurements");
                 });
