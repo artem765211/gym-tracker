@@ -1,3 +1,6 @@
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using Gymtracker.Api.Dtos.Auth;
 using Gymtracker.Infrastructure.Data;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -30,6 +33,24 @@ public class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 
         await using var db = new AppDbContext(options);
         await db.Database.MigrateAsync();
+    }
+
+    // Регистрирует нового пользователя и возвращает клиента, который шлёт запросы с его токеном
+    public async Task<HttpClient> CreateAuthorizedClientAsync()
+    {
+        var client = CreateClient();
+
+        var response = await client.PostAsJsonAsync(
+            "/api/auth/register",
+            new RegisterRequest($"{Guid.NewGuid()}@example.test", "Test-password-1"));
+
+        response.EnsureSuccessStatusCode(); // если регистрация не удалась, тест сразу упадёт здесь
+
+        var auth = await response.Content.ReadFromJsonAsync<AuthResponse>();
+
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", auth!.Token);
+
+        return client;
     }
 
     // Подменяем настройки приложения: другая база и другой ключ подписи токенов
