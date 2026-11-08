@@ -39,4 +39,29 @@ public class WorkoutsTests
         Assert.Equal(HttpStatusCode.OK, ownerResponse.StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, strangerResponse.StatusCode);
     }
+
+    [Fact]
+    public async Task Create_DuplicateDate_Returns400AndKeepsOneWorkout()
+    {
+        // Подготовка: пользователь и запрос на создание тренировки
+        var client = await _factory.CreateAuthorizedClientAsync();
+        var exercises = await client.GetFromJsonAsync<List<ExerciseResponse>>("/api/exercises");
+
+        var date = new DateOnly(2026, 3, 10);
+        var request = new CreateWorkoutRequest(date, null, [exercises![0].Id]);
+
+        // Действие: один и тот же запрос дважды
+        var first = await client.PostAsJsonAsync("/api/workouts", request);
+        var second = await client.PostAsJsonAsync("/api/workouts", request);
+
+        // Проверка: первая тренировка создалась, вторая нет
+        Assert.Equal(HttpStatusCode.Created, first.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, second.StatusCode);
+
+        // И в базе действительно осталась одна
+        var workouts = await client.GetFromJsonAsync<List<WorkoutResponse>>(
+            "/api/workouts?from=2026-03-10&to=2026-03-10");
+
+        Assert.Single(workouts!);
+    }
 }
