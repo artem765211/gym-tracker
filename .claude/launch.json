@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "api",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "Gymtracker.Api", "--launch-profile", "http", "--no-build"],
+      "port": 5036
+    },
+    {
+      "name": "web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "C:\\Users\\Артем\\RiderProjects\\Gymtracker\\gym-tracker-web", "run", "dev"],
+      "port": 5173
+    }
+  ]
+}
